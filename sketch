@@ -1,0 +1,47 @@
+#include <LiquidCrystal_PCF8574.h>
+#include <Wire.h>
+LiquidCrystal_PCF8574 lcd(0x3F);
+#define weight_PIN A1 // пин А1 для изменения значения массы человека
+#define index_x_PIN A7 // пин А7 для изменения индекса х 
+#define M1 5 // Motor 1
+#define M2 6 // Motor 2
+unsigned long timing; // Переменная для хранения точки отсчета
+void setup() {
+  pinMode(M1, OUTPUT);
+  pinMode(M2, OUTPUT);
+  pinMode(A7, INPUT);
+  pinMode(A1, INPUT);
+  lcd.begin(16, 2);
+  lcd.setBacklight(255);  
+  lcd.clear();
+}
+
+void loop() {
+int  index_x = map(analogRead(index_x_PIN), 0, 1023, 0, 8000); // изменение точек экстремума индекса x от 0 до 8000
+int  weight = map(analogRead(weight_PIN), 0, 1023, 2500, 150000); // изменение точек экстремума массы человека в граммах
+  int MV = weight/10 + 1 + index_x/1000; // расчет минутного объема дыхания 
+  int VT = weight*10; // расчет дыхательного объема
+  int frequency = MV/VT; // расчет частоты вдохов в минуту
+  if (millis()-timing >= frequency);
+  {
+  digitalWrite(M1, HIGH); // Motor 1 is on
+  timing - millis();
+  }
+  digitalWrite(M1, LOW); // Motor 1 is off
+  if (millis() - timing >= index_x)
+  {
+    digitalWrite(M2, HIGH); // Motor 2 is on
+    timing = millis();
+  }
+  digitalWrite(M2, LOW); // Motor 2 is off 
+  lcd.setCursor(0, 1); // курсор в стартовой позиции на нижней строке
+  lcd.print("Index =  "); // на экране появляется показатель минутного объема дыхания
+  lcd.setCursor(0, 0); // курсор в стартовой позиции на верхней строке
+  lcd.print("Weight =  "); // на экране появляется показатель массы человека
+  lcd.setCursor(10, 0); // курсор стоит на месте 8 символа верхней строки
+  lcd.print(weight); // на экране появляется значение массы человека
+  lcd.setCursor(11, 1); // курсор стоит на месте 8 символа верхней строки
+  lcd.print(index_x); // на экране появляется значение минутного объема дыхания
+
+}
+
